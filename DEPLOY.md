@@ -54,3 +54,19 @@ Halaman baru: `/friends` (daftar teman, permintaan, cari & tambah), `/chat` (cha
 Tips uji coba: buat 2 akun (browser biasa + jendela incognito). Jika "Confirm email" aktif di Supabase Auth, nonaktifkan sementara saat testing. Pastikan Realtime aktif untuk `chat_messages` dan `friendships` (Database → Replication).
 
 Catatan keamanan: rank point masih dihitung di perangkat pemain lalu disinkronkan ke profil, jadi belum anti-curang. Profil (username, bio, avatar, rank) terlihat oleh semua pemain yang login; email tidak pernah dibagikan. Belum ada fitur block/report maupun moderasi chat; pertimbangkan sebelum dibuka untuk umum.
+
+
+## Update: daftar wajib + notifikasi Telegram
+**Daftar wajib.** Saat Supabase aktif, pengunjung yang belum login hanya melihat layar Daftar/Masuk (`components/welcome-gate.tsx`); seluruh menu dan halaman baru terbuka setelah login. Tanpa env Supabase, aplikasi tetap berjalan dalam mode demo lokal. Catatan: ini gerbang di sisi tampilan. Perlindungan data yang sebenarnya tetap dari RLS Supabase (migrasi 001–003).
+
+**Notifikasi Telegram (setiap daftar / login).**
+1. Di Telegram, chat dengan **@BotFather** → `/newbot` → salin token bot.
+2. Kirim pesan apa saja ke bot barumu, lalu buka `https://api.telegram.org/bot<TOKEN>/getUpdates` dan salin angka `chat.id`.
+3. Di Vercel → Settings → Environment Variables, tambahkan `TELEGRAM_BOT_TOKEN` dan `TELEGRAM_CHAT_ID` (tanpa awalan `NEXT_PUBLIC_`), opsional `NOTIFY_TIMEZONE`. Redeploy.
+
+Isi notifikasi: username, email, IP, perkiraan lokasi (dari header IP Vercel), jenis & model perangkat, browser, sistem operasi, layar, bahasa, zona waktu, waktu, dan waktu akun dibuat. Kata sandi tidak pernah dikirim. Server memverifikasi sesi Supabase sebelum mengirim, jadi orang lain tidak bisa memalsukan notifikasi.
+
+Batasan yang perlu diketahui:
+- **Lokasi** hanya perkiraan kota dari IP (bisa meleset, VPN mengubahnya) dan baru terisi setelah di-deploy ke Vercel. Lokasi GPS akurat butuh izin eksplisit dari pemain.
+- **Model HP**: Android Chrome bisa memberi kode model (mis. `SM-S918B`); browser lain dan iPhone tidak. Untuk iPhone, yang tampil hanya perkiraan dari ukuran layar.
+- Pemain diberi tahu soal data ini di layar daftar (dengan centang persetujuan). Sesuaikan dengan aturan privasi yang berlaku (mis. UU PDP) bila situs dibuka untuk umum.
