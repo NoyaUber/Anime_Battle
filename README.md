@@ -9,13 +9,13 @@ A deployable Next.js prototype for a fan-made character archive, local demo gach
 - Fighter dossier with Power, Speed, and Durability values.
 - Demo gacha using 1,200 starting credits and 100 credits per pull.
 - Local browser persistence for credits, pity counter, and recruited characters.
-- 1v1 weighted-stat battle prototype with a readable battle log.
+- Turn-based 1v1 skill battle prototype with four selectable moves, CPU response, HP bars, battle log, and Victory/Defeat popup.
 - Optional Supabase schema foundation in `supabase/migrations/001_initial_schema.sql`.
 - Runs in demo mode when Supabase environment variables are not set.
 
 ## Important scope limits
 
-This is a working **prototype**, not the full production backend. Sample characters and their stats are fictional placeholders, not verified VSBW data or official canon outcomes. The battle algorithm is a transparent weighted-stat comparison, not a complete powerscaling engine. The displayed pity counter is a UI prototype: soft pity adjustments and a server-enforced hard pity are not implemented yet. Login, account sync, server-authoritative gacha, battle history persistence, and verified-source data ingestion still need implementation.
+This is a working **prototype**, not the full production backend. Sample characters and their stats are fictional placeholders, not verified VSBW data or official canon outcomes. The battle algorithm is a transparent weighted-stat comparison, not a complete powerscaling engine. The displayed pity counter is a UI prototype: soft pity adjustments and a server-enforced hard pity are not implemented yet. Supabase email/password account creation and login are implemented. Cross-device collection/account sync, server-authoritative gacha, battle history persistence, and verified-source ingestion of all four abilities per fighter still need implementation.
 
 ## Run locally
 
@@ -45,7 +45,7 @@ Open `http://localhost:3000`.
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 4. Redeploy after adding environment variables.
 
-The current UI does not yet call Supabase for auth or gacha writes; adding the variables alone does not enable account sync. Never place the Supabase `service_role` key in a `NEXT_PUBLIC_` variable or browser code. Do not run this starter migration over an existing database without reviewing table and policy conflicts first.
+The Account page uses Supabase Auth when the variables are configured. Adding the variables does not yet enable cross-device inventory or gacha sync. Never place the Supabase `service_role` key in a `NEXT_PUBLIC_` variable or browser code. Do not run this starter migration over an existing database without reviewing table and policy conflicts first.
 
 ## Gacha prototype values
 
@@ -86,3 +86,12 @@ Character thumbnails are requested in one cached server-side batch from the VS B
 ### Does this require new Supabase SQL?
 
 No SQL is needed for the local demo roster, because the app currently reads `lib/characters.ts`. The existing `characters` table has `source_url` and `source_notes` but does not yet store the VSB page title or thumbnail. If you later switch the UI to read roster data from Supabase, add migration columns for `vsb_title`, `image_url`, `version_label`, and `stat_note`, then seed the character rows. Do not rerun the initial migration on an existing database.
+
+
+## Account and skill battle update
+
+- Open `/account` to create an account, sign in, or sign out using Supabase Auth. The account is managed by Supabase; the app does not store plaintext passwords.
+- Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel and configure Supabase Auth Site URL / Redirect URLs to match the deployment.
+- Battle Lab now has four moves per fighter, turn-based HP, an automatic CPU response, cooldown display, battle log, and a Victory/Defeat popup.
+- `lib/skills.ts` defines the move kit. The signature skill uses the roster's existing ability label; rapid attack, defensive stance, and ultimate are gameplay adaptations. They are **not** a verified extraction of four canonical VS Battles Wiki abilities for every character. The linked character profile is the reference to verify before competitive use.
+- No new SQL migration is required for this update. Do not rerun the existing initial migration on a database where it has already been applied.

@@ -1,23 +1,31 @@
 # Deploy checklist
 
-## Fastest route: Vercel
-1. Extract the ZIP on your computer.
-2. Upload the folder contents to a new GitHub repository.
-3. Go to https://vercel.com/new and import that repository.
-4. Keep the framework preset as Next.js, then click Deploy.
-5. The prototype runs without Supabase variables.
+## Vercel
+1. Extract this ZIP.
+2. Upload the project contents to a GitHub repository.
+3. Import the repository at https://vercel.com/new.
+4. In Vercel → Project Settings → Environment Variables, add:
+   - `NEXT_PUBLIC_SUPABASE_URL` — Supabase Project URL
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase publishable/anon key
+5. In Supabase → Authentication → URL Configuration, set the Site URL to the deployed Vercel URL and add that URL to Redirect URLs.
+6. Redeploy after changing environment variables.
 
-## Run locally
+Without the two Supabase variables, the rest of the app runs in demo mode and the Account page explains that authentication is unavailable.
+
+## Supabase SQL
+The existing `supabase/migrations/001_initial_schema.sql` is the starter schema. If it was already run on the same project, do not run it again blindly. The account screen uses Supabase Auth directly and does not require another SQL migration. Collection/gacha syncing to a signed-in account is not implemented by this update yet.
+
+## Local development
 ```bash
 npm install
 npm run dev
 ```
-Then visit http://localhost:3000.
+Open http://localhost:3000.
 
-## Note
-This ZIP contains a prototype with local demo saves. Supabase schema is included as a foundation, but authentication and server-side gacha/account sync are not yet connected. Do not expose Supabase service-role keys in frontend variables.
+## Battle rules
+Battle Lab is now a turn-based prototype: choose one of four moves, then the CPU fighter responds. HP reaches zero to end the match; a Victory/Defeat popup appears. Damage, hit chance, cooldowns and defensive stance are game mechanics, not official VS Battles Wiki statistics.
 
+Each fighter's first skill uses the roster's existing `ability` label and profile link. The other moves (rapid attack, defensive stance, and ultimate adaptation) are game-design placeholders, not a verified extraction of four canon abilities from every VS Battles Wiki page. Verify each character's exact version and ability list before claiming that a move is source-verified.
 
-## Character images and expanded roster
-
-The current roster is stored in `lib/characters.ts`; no extra SQL is required to display it. Image thumbnails are requested server-side through `/api/character-images` and cached for a day. If images fail, the app uses initials as a fallback. Verify that each source page matches the intended character incarnation before using the roster for competitive results. The stat values are game-balance estimates, not official VSBW ratings.
+## Security notes
+Never add a Supabase `service_role` key to frontend code or a `NEXT_PUBLIC_` variable. Account authentication is implemented, but cross-device inventory, gacha wallet, and battle-history persistence still need secure server-side/RPC integration.
