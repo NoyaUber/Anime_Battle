@@ -111,3 +111,11 @@ No SQL is needed for the local demo roster, because the app currently reads `lib
 - Daily claim: +500 coins once per local calendar day.
 - Missing source portraits show a generated stylized fallback illustration. Arena Tier is a cross-universe game estimate based on Power/Speed/Durability, not in-universe placement.
 - These progression values are browser-local demo data and are not synced or anti-cheat protected.
+
+## Gambar karakter (VS Battles)
+- Gambar diambil otomatis dari profil VSB lewat `/api/character-images` (urutan: pageimages+redirect → Articles/Details → og:image).
+- Cek hasil: buka `/api/character-images?debug=1` → lihat `report` dan daftar `missing`.
+- Kalau ada gambar yang salah/kosong: isi `lib/image-overrides.ts` (id karakter → URL gambar langsung dari VSB).
+
+## Fitur sosial
+`/profile` (edit identitas), `/u/<username>` (profil publik), `/friends` (sistem teman), `/chat` (chat global realtime). Butuh Supabase + migrasi `003_social_profile_friends_chat.sql` (lihat DEPLOY.md).

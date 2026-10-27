@@ -41,3 +41,16 @@ Single-player Battle Lab wins award **200 demo coins** in browser storage. Multi
 
 ### New profile/rank/gacha UI
 No new SQL migration is needed for the current local-demo Profile & Rank, daily claim, starter roster, or 10-pull gacha. These values are stored in the current browser's `aba-demo-save`; they do not sync across devices. Keep the existing SQL migrations for multiplayer as documented above.
+
+
+## Update: profil publik, teman, dan chat global
+Jalankan **hanya** `supabase/migrations/003_social_profile_friends_chat.sql` di Supabase → SQL Editor (setelah 001 dan 002; aman dijalankan ulang). Migrasi ini:
+- menambah kolom profil (`bio`, `avatar_character`, `rank_points`, `last_seen`), membuat profil otomatis untuk akun baru, dan mengisi profil akun lama;
+- membuat tabel `friendships` (permintaan teman) dan `chat_messages` (chat global) lengkap dengan RLS, batas spam (5 pesan / 10 detik), dan Realtime;
+- mengubah edit profil agar lewat fungsi `update_my_profile` (validasi username/bio). Policy update langsung ke `profiles` dihapus.
+
+Halaman baru: `/friends` (daftar teman, permintaan, cari & tambah), `/chat` (chat global realtime), `/u/<username>` (profil publik + tombol tambah teman), dan `/profile` yang dirombak (edit username, bio, avatar).
+
+Tips uji coba: buat 2 akun (browser biasa + jendela incognito). Jika "Confirm email" aktif di Supabase Auth, nonaktifkan sementara saat testing. Pastikan Realtime aktif untuk `chat_messages` dan `friendships` (Database → Replication).
+
+Catatan keamanan: rank point masih dihitung di perangkat pemain lalu disinkronkan ke profil, jadi belum anti-curang. Profil (username, bio, avatar, rank) terlihat oleh semua pemain yang login; email tidak pernah dibagikan. Belum ada fitur block/report maupun moderasi chat; pertimbangkan sebelum dibuka untuk umum.
