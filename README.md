@@ -75,3 +75,14 @@ These are illustrative values for the demo. The current pull code samples a rari
 - Lucide icons
 - Optional Supabase JS client and SQL foundation
 - Vercel deployment
+
+
+## Expanded fiction roster and character images
+
+The starter roster now includes anime/manga, comics, webnovels/novels, and SCP entries. The 0–100 Power/Speed/Durability values and rarity tiers are **game-balance estimates**, not official VS Battles Wiki statistics or canon verdicts. The selected profile title is stored per fighter so users can inspect the source page and version assumptions.
+
+Character thumbnails are requested in one cached server-side batch from the VS Battles Wiki/Fandom MediaWiki PageImages API. If a page has no usable thumbnail, Fandom blocks the request, or the source changes, the UI falls back to initials; the app does not download or redistribute image files. Each character source link should be reviewed for correct continuity and image usage rights.
+
+### Does this require new Supabase SQL?
+
+No SQL is needed for the local demo roster, because the app currently reads `lib/characters.ts`. The existing `characters` table has `source_url` and `source_notes` but does not yet store the VSB page title or thumbnail. If you later switch the UI to read roster data from Supabase, add migration columns for `vsb_title`, `image_url`, `version_label`, and `stat_note`, then seed the character rows. Do not rerun the initial migration on an existing database.
