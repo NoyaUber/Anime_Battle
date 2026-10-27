@@ -3,6 +3,7 @@
 import FighterPortrait from '@/components/fighter-portrait';
 import { characters, type Fighter } from '@/lib/characters';
 import { getSkills, type BattleSkill } from '@/lib/skills';
+import { awardRank, ensureStarterSave, STARTER_IDS, DEFAULT_CREDITS } from '@/lib/progression';
 import { supabase } from '@/lib/supabase';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DoorOpen, Copy, Users, Swords, Trophy, Coins, RefreshCw } from 'lucide-react';
@@ -19,7 +20,8 @@ const makeCode = () => Math.random().toString(36).slice(2,8).toUpperCase();
 export default function MultiplayerPage() {
   const [userId, setUserId] = useState('');
   const [email, setEmail] = useState('');
-  const [fighterId, setFighterId] = useState(characters[0].id);
+  const [fighterId, setFighterId] = useState(STARTER_IDS[0]);
+  const [usableIds, setUsableIds] = useState<string[]>(STARTER_IDS);
   const [joinCode, setJoinCode] = useState('');
   const [room, setRoom] = useState<Room|null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,6 +29,7 @@ export default function MultiplayerPage() {
   const [message, setMessage] = useState('');
   const [coinsEarned, setCoinsEarned] = useState(0);
   const rewardAttempted = useRef<string>('');
+  const rankAttempted = useRef<string>('');
   const fighter = useMemo(() => characters.find(c=>c.id===fighterId) ?? characters[0],[fighterId]);
   const hostFighter = useMemo(() => characters.find(c=>c.id===room?.state.hostFighter) ?? characters[0],[room]);
   const guestFighter = useMemo(() => characters.find(c=>c.id===room?.state.guestFighter) ?? null,[room]);
@@ -42,6 +45,8 @@ export default function MultiplayerPage() {
     const {data,error:fetchError}=await supabase.from('multiplayer_rooms').select('*').eq('id',id).single();
     if (!fetchError && data) setRoom(data as Room);
   },[]);
+
+  useEffect(() => { const save = ensureStarterSave(); setUsableIds(Array.isArray(save.owned) ? [...new Set([...STARTER_IDS, ...save.owned])] : STARTER_IDS); }, []);
 
   useEffect(() => {
     if (!supabase) return;
@@ -60,13 +65,19 @@ export default function MultiplayerPage() {
   },[room?.id]);
 
   useEffect(() => {
+    if (!room || room.status !== 'finished' || !userId || (room.host_id !== userId && room.guest_id !== userId) || rankAttempted.current === room.id) return;
+    rankAttempted.current = room.id;
+    awardRank(room.winner_id === userId ? 'win' : 'loss');
+  }, [room?.id, room?.status, room?.winner_id, room?.host_id, room?.guest_id, userId]);
+
+  useEffect(() => {
     if(!room || room.status!=='finished' || room.winner_id!==userId || !supabase || rewardAttempted.current===room.id) return;
     rewardAttempted.current=room.id;
     supabase.rpc('claim_multiplayer_reward',{p_room_id:room.id}).then(({data,error:rpcError})=>{
       if(rpcError){setError(`Pertandingan selesai, tetapi hadiah koin gagal diklaim: ${rpcError.message}`);return;}
       setCoinsEarned(Number(data)||0);
       if (Number(data)>0) {
-        try { const saved = JSON.parse(localStorage.getItem('aba-demo-save') || '{}'); const credits = typeof saved.credits === 'number' ? saved.credits : 1200; localStorage.setItem('aba-demo-save', JSON.stringify({ ...saved, credits: credits + Number(data) })); } catch {}
+        try { const saved = JSON.parse(localStorage.getItem('aba-demo-save') || '{}'); const credits = typeof saved.credits === 'number' ? saved.credits : DEFAULT_CREDITS; localStorage.setItem('aba-demo-save', JSON.stringify({ ...saved, credits: credits + Number(data) })); } catch {}
       }
       setMessage(Number(data)>0 ? `Menang! ${Number(data)} koin telah ditambahkan ke dompet akun.` : 'Hadiah pertandingan ini sudah pernah diklaim.');
       refreshRoom(room.id);
@@ -129,14 +140,14 @@ export default function MultiplayerPage() {
     if(data)setRoom(data as Room);else{setError('Giliran sudah berubah. Room disinkronkan ulang.');await refreshRoom(room.id);}
   }
 
-  async function leaveRoom(){setRoom(null);setMessage('');setError('');setCoinsEarned(0);rewardAttempted.current='';}
+  async function leaveRoom(){setRoom(null);setMessage('');setError('');setCoinsEarned(0);rewardAttempted.current='';rankAttempted.current='';}
   const skills=myFighter?getSkills(myFighter):[];
 
   return <>
     <div className="page-heading"><div><div className="eyebrow">ONLINE PLAY / PRIVATE MATCH</div><h1>Multi<span>player</span></h1><p>Buat room privat, bagikan kode enam karakter, lalu bergiliran memilih skill melawan teman secara online.</p></div><div className="battle-mode"><Users size={18}/><div><small>GAME MODE</small><b>ONLINE 1V1</b></div></div></div>
     {!supabase ? <section className="room-panel"><h2>Supabase belum dikonfigurasi</h2><p>Isi URL dan anon key Supabase pada environment variables Vercel untuk mengaktifkan room online.</p></section> : !userId ? <section className="room-panel"><h2>Masuk untuk bermain</h2><p>Multiplayer membutuhkan akun Supabase. Masuk atau buat akun terlebih dahulu.</p><a className="button button-primary" href="/account">Buka Account</a></section> : !room ? <div className="room-create-layout">
-      <section className="room-panel"><div className="room-icon"><DoorOpen size={24}/></div><div className="eyebrow">HOST A MATCH</div><h2>Create a <span>Room</span></h2><p>Pilih karakter yang akan kamu gunakan. Setelah room dibuat, bagikan kode kepada teman.</p><label className="room-field">Your fighter<select value={fighterId} onChange={e=>setFighterId(e.target.value)}>{characters.map(c=><option value={c.id} key={c.id}>{c.name} — {c.universe}</option>)}</select></label><div className="room-preview"><FighterPortrait fighter={fighter} className="room-fighter-avatar"/><div><b>{fighter.name}</b><small>{fighter.universe} · {fighter.rarity}</small></div></div><button className="button button-primary" disabled={busy} onClick={createRoom}><DoorOpen size={16}/>{busy?'Creating…':'Create private room'}</button></section>
-      <section className="room-panel"><div className="room-icon cyan"><Users size={24}/></div><div className="eyebrow">JOIN A MATCH</div><h2>Join with <span>Code</span></h2><p>Masukkan kode room dari teman. Pilih karakter yang ingin kamu gunakan setelah itu.</p><label className="room-field">Your fighter<select value={fighterId} onChange={e=>setFighterId(e.target.value)}>{characters.map(c=><option value={c.id} key={c.id}>{c.name} — {c.universe}</option>)}</select></label><label className="room-field">Room code<input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase().slice(0,6))} placeholder="ABC123" maxLength={6}/></label><button className="button button-ghost" disabled={busy||joinCode.trim().length!==6} onClick={joinRoom}><Users size={16}/>{busy?'Joining…':'Join room'}</button></section>
+      <section className="room-panel"><div className="room-icon"><DoorOpen size={24}/></div><div className="eyebrow">HOST A MATCH</div><h2>Create a <span>Room</span></h2><p>Pilih karakter yang akan kamu gunakan. Setelah room dibuat, bagikan kode kepada teman.</p><label className="room-field">Your fighter<select value={fighterId} onChange={e=>setFighterId(e.target.value)}>{characters.filter(c=>usableIds.includes(c.id)).map(c=><option value={c.id} key={c.id}>{c.name} — {c.universe}</option>)}</select></label><div className="room-preview"><FighterPortrait fighter={fighter} className="room-fighter-avatar"/><div><b>{fighter.name}</b><small>{fighter.universe} · {fighter.rarity}</small></div></div><button className="button button-primary" disabled={busy} onClick={createRoom}><DoorOpen size={16}/>{busy?'Creating…':'Create private room'}</button></section>
+      <section className="room-panel"><div className="room-icon cyan"><Users size={24}/></div><div className="eyebrow">JOIN A MATCH</div><h2>Join with <span>Code</span></h2><p>Masukkan kode room dari teman. Pilih karakter yang ingin kamu gunakan setelah itu.</p><label className="room-field">Your fighter<select value={fighterId} onChange={e=>setFighterId(e.target.value)}>{characters.filter(c=>usableIds.includes(c.id)).map(c=><option value={c.id} key={c.id}>{c.name} — {c.universe}</option>)}</select></label><label className="room-field">Room code<input value={joinCode} onChange={e=>setJoinCode(e.target.value.toUpperCase().slice(0,6))} placeholder="ABC123" maxLength={6}/></label><button className="button button-ghost" disabled={busy||joinCode.trim().length!==6} onClick={joinRoom}><Users size={16}/>{busy?'Joining…':'Join room'}</button></section>
     </div> : <>
       <section className="room-panel room-active-panel"><div className="room-active-top"><div><div className="eyebrow">PRIVATE ROOM CODE</div><h2>{room.room_code}</h2><p>{room.status==='waiting'?'Waiting for your friend to join…':room.status==='active'?'Both players connected. Take turns using your four skills.':'Match complete.'}</p></div><button className="button button-ghost" onClick={()=>navigator.clipboard?.writeText(room.room_code)}><Copy size={15}/> Copy code</button></div>
         {room.status==='waiting'&&<div className="room-waiting"><RefreshCw size={18}/><span>Bagikan kode <b>{room.room_code}</b> kepada temanmu. Halaman ini akan diperbarui otomatis ketika teman bergabung.</span></div>}

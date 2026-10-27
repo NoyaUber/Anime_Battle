@@ -3,6 +3,7 @@
 import FighterPortrait from '@/components/fighter-portrait';
 import { characters, type Fighter } from '@/lib/characters';
 import { getSkills, type BattleSkill } from '@/lib/skills';
+import { awardRank, ensureStarterSave, STARTER_IDS, DEFAULT_CREDITS } from '@/lib/progression';
 import { useEffect, useMemo, useState } from 'react';
 import { Swords, RotateCcw, ShieldCheck, Zap, Trophy, X, Heart, Shield, Sparkles } from 'lucide-react';
 
@@ -11,8 +12,8 @@ type Outcome = 'win' | 'loss' | null;
 const MAX_HP = 100;
 
 export default function Battle() {
-  const [a, setA] = useState(characters[1]?.id ?? characters[0].id);
-  const [b, setB] = useState(characters[3]?.id ?? characters[1].id);
+  const [a, setA] = useState(STARTER_IDS[0]);
+  const [b, setB] = useState(STARTER_IDS[1]);
   const [hpA, setHpA] = useState(MAX_HP);
   const [hpB, setHpB] = useState(MAX_HP);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -29,6 +30,9 @@ export default function Battle() {
   const skillsA = useMemo(() => getSkills(first), [first]);
   const skillsB = useMemo(() => getSkills(second), [second]);
   const finished = Boolean(winner);
+  const [usableIds, setUsableIds] = useState<string[]>(STARTER_IDS);
+  const [rankDelta, setRankDelta] = useState(0);
+  useEffect(() => { const save = ensureStarterSave(); setUsableIds(Array.isArray(save.owned) ? [...new Set([...STARTER_IDS, ...save.owned])] : STARTER_IDS); }, []);
 
   function reset(nextA = a, nextB = b) {
     setA(nextA); setB(nextB); setHpA(MAX_HP); setHpB(MAX_HP); setLogs([]); setTurn(1);
@@ -40,11 +44,12 @@ export default function Battle() {
 
   function finish(winningFighter: Fighter, result: Exclude<Outcome, null>, finalLogs: LogEntry[]) {
     setWinner(winningFighter); setOutcome(result); setLogs(finalLogs);
+    const rankUpdate = awardRank(result); setRankDelta(rankUpdate.delta);
     if (result === 'win') {
       const reward = 200;
       try {
         const saved = JSON.parse(localStorage.getItem('aba-demo-save') || '{}');
-        const credits = typeof saved.credits === 'number' ? saved.credits : 1200;
+        const credits = typeof saved.credits === 'number' ? saved.credits : DEFAULT_CREDITS;
         localStorage.setItem('aba-demo-save', JSON.stringify({ ...saved, credits: credits + reward }));
         setRewardEarned(reward);
       } catch { setRewardEarned(0); }
@@ -106,7 +111,7 @@ export default function Battle() {
     const hp = isA ? hpA : hpB;
     return <article className={`fighter-select-card ${isA ? 'arena-player' : 'arena-enemy'}`}>
       <div className="select-card-top"><span>{isA ? 'PLAYER FIGHTER' : 'CPU OPPONENT'}</span><span className="side-tag">{isA ? 'SIDE A' : 'SIDE B'}</span></div>
-      <label>Choose fighter<select value={isA ? a : b} onChange={e => chooseFighter(side, e.target.value)} disabled={turn > 1 || finished}>{characters.map(x => <option key={x.id} value={x.id}>{x.name} — {x.universe}</option>)}</select></label>
+      <label>Choose fighter<select value={isA ? a : b} onChange={e => chooseFighter(side, e.target.value)} disabled={turn > 1 || finished}>{characters.filter(x => usableIds.includes(x.id)).map(x => <option key={x.id} value={x.id}>{x.name} — {x.universe}</option>)}</select></label>
       <FighterPortrait fighter={c} className="battle-avatar" />
       <h2>{c.name}</h2><p>{c.ability}</p>
       <div className="hp-heading"><span><Heart size={13}/> HP</span><b>{hp} / {MAX_HP}</b></div><div className="hp-track"><i style={{ width: `${hp}%` }} /></div>
@@ -124,6 +129,6 @@ export default function Battle() {
     </section>
     <section className="log-panel"><div className="log-header"><div><div className="eyebrow">MATCH TELEMETRY</div><h2>Battle <span>Log</span></h2></div><span className={`log-status ${finished ? 'complete' : ''}`}><i/>{finished ? 'MATCH COMPLETE' : 'READY FOR ACTION'}</span></div><div className="log-lines">{logs.length ? logs.slice().reverse().map((line,i) => <div className={`log-line log-${line.side}`} key={`${turn}-${i}`}><span>{String(logs.length - i).padStart(2,'0')}</span><p>{line.text}</p></div>) : <div className="log-empty"><Swords size={23}/><p>Choose a skill above to start the first turn.</p></div>}</div></section>
     <p className="disclaimer">Character source links point to VS Battles Wiki profiles. Skill names and descriptions must be checked against the exact profile/version; generic guard and game mechanics are adaptations, not source quotations.</p>
-    {outcome && winner && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="battle-result-title"><div className={`result-modal battle-result-modal ${outcome === 'win' ? 'result-win' : 'result-loss'}`}><button className="modal-close" aria-label="Close result" onClick={() => setOutcome(null)}><X size={19}/></button><div className="result-spark">{outcome === 'win' ? <Trophy size={34}/> : <Swords size={34}/>}</div><div className="eyebrow result-eyebrow">MATCH COMPLETE · TURN {turn}</div><h2 id="battle-result-title">{outcome === 'win' ? 'VICTORY' : 'DEFEAT'}</h2><p>{outcome === 'win' ? `${first.name} wins the duel!` : `${first.name} was defeated by ${second.name}.`}</p>{outcome === 'win' && <div className="battle-coin-reward"><span>+{rewardEarned || 200}</span> COINS EARNED</div>}<FighterPortrait fighter={winner} className="result-avatar"/><h3>{winner.name}</h3><p className="result-subtitle">{winner.universe}</p><div className="result-modal-actions"><button className="button button-primary" onClick={() => { reset(); setOutcome(null); }}>Rematch</button><button className="button button-ghost" onClick={() => setOutcome(null)}>View battle log</button></div></div></div>}
+    {outcome && winner && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="battle-result-title"><div className={`result-modal battle-result-modal ${outcome === 'win' ? 'result-win' : 'result-loss'}`}><button className="modal-close" aria-label="Close result" onClick={() => setOutcome(null)}><X size={19}/></button><div className="result-spark">{outcome === 'win' ? <Trophy size={34}/> : <Swords size={34}/>}</div><div className="eyebrow result-eyebrow">MATCH COMPLETE · TURN {turn}</div><h2 id="battle-result-title">{outcome === 'win' ? 'VICTORY' : 'DEFEAT'}</h2><p>{outcome === 'win' ? `${first.name} wins the duel!` : `${first.name} was defeated by ${second.name}.`}</p><div className="battle-coin-reward"><span>{rankDelta > 0 ? '+' : ''}{rankDelta} RP</span> RANK POINTS {outcome === 'win' && <><span>+{rewardEarned || 200}</span> COINS</>}</div><FighterPortrait fighter={winner} className="result-avatar"/><h3>{winner.name}</h3><p className="result-subtitle">{winner.universe}</p><div className="result-modal-actions"><button className="button button-primary" onClick={() => { reset(); setOutcome(null); }}>Rematch</button><button className="button button-ghost" onClick={() => setOutcome(null)}>View battle log</button></div></div></div>}
   </>;
 }

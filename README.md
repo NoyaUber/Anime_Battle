@@ -102,3 +102,12 @@ No SQL is needed for the local demo roster, because the app currently reads `lib
 - The `/multiplayer` page supports authenticated private room creation, six-character join codes, realtime room updates, turn-based four-skill combat, battle logs, and a 150-coin winner reward through Supabase RPC.
 - Existing Supabase projects must run `supabase/migrations/002_multiplayer_and_rewards.sql` once in SQL Editor after migration 001. Do not delete existing tables.
 - Multiplayer requires both players to sign into the same Supabase-backed deployment. The turn state is currently client-submitted and is suitable as a prototype, not as an anti-cheat production economy.
+
+
+## Latest progression features
+- Starter roster: six Common fighters; new demo saves start with 300 coins.
+- Gacha: single summon costs 100 coins; 10-pull costs 1,000 coins and avoids duplicates while unowned fighters remain.
+- Profile & Rank: wins add 10 RP, losses subtract 5 RP (minimum 0); first rank Bronze begins at 100 RP.
+- Daily claim: +500 coins once per local calendar day.
+- Missing source portraits show a generated stylized fallback illustration. Arena Tier is a cross-universe game estimate based on Power/Speed/Durability, not in-universe placement.
+- These progression values are browser-local demo data and are not synced or anti-cheat protected.

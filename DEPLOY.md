@@ -37,3 +37,7 @@ If you already ran `supabase/migrations/001_initial_schema.sql`, open Supabase D
 After the SQL completes, verify that `multiplayer_rooms` is included in Supabase Realtime (the migration attempts to add it to `supabase_realtime`). Sign in at `/account`, open `/multiplayer`, create a room, and send the six-character code to a friend who also has an account on the same deployed app.
 
 Single-player Battle Lab wins award **200 demo coins** in browser storage. Multiplayer wins award **150 coins** through the Supabase wallet RPC and also update the local demo wallet shown by the current gacha UI. This is a prototype economy: the current multiplayer turn state is still submitted by clients and should be moved to server-validated actions before using competitive rankings or valuable persistent currency.
+
+
+### New profile/rank/gacha UI
+No new SQL migration is needed for the current local-demo Profile & Rank, daily claim, starter roster, or 10-pull gacha. These values are stored in the current browser's `aba-demo-save`; they do not sync across devices. Keep the existing SQL migrations for multiplayer as documented above.
