@@ -1,12 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Swords, LayoutGrid, Sparkles, Users, BookOpen, Shield, UserRound } from 'lucide-react';
+import { Swords, LayoutGrid, Sparkles, Users, BookOpen, Shield, UserRound, DoorOpen } from 'lucide-react';
 const links = [
   {href:'/',label:'Dashboard',icon:LayoutGrid},
   {href:'/characters',label:'Fighters',icon:Users},
   {href:'/gacha',label:'Summon',icon:Sparkles},
   {href:'/battle',label:'Battle Lab',icon:Swords},
+  {href:'/multiplayer',label:'Multiplayer',icon:DoorOpen},
   {href:'/collection',label:'Collection',icon:BookOpen},
   {href:'/account',label:'Account',icon:UserRound}
 ];

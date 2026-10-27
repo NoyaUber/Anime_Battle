@@ -29,3 +29,11 @@ Each fighter's first skill uses the roster's existing `ability` label and profil
 
 ## Security notes
 Never add a Supabase `service_role` key to frontend code or a `NEXT_PUBLIC_` variable. Account authentication is implemented, but cross-device inventory, gacha wallet, and battle-history persistence still need secure server-side/RPC integration.
+
+## Update: win rewards and multiplayer rooms
+
+If you already ran `supabase/migrations/001_initial_schema.sql`, open Supabase Dashboard → SQL Editor and run **only** `supabase/migrations/002_multiplayer_and_rewards.sql`. Do not rerun or delete the existing schema. This adds private room storage, Realtime subscriptions, a room-join RPC, and an idempotent 150-credit winner reward RPC.
+
+After the SQL completes, verify that `multiplayer_rooms` is included in Supabase Realtime (the migration attempts to add it to `supabase_realtime`). Sign in at `/account`, open `/multiplayer`, create a room, and send the six-character code to a friend who also has an account on the same deployed app.
+
+Single-player Battle Lab wins award **200 demo coins** in browser storage. Multiplayer wins award **150 coins** through the Supabase wallet RPC and also update the local demo wallet shown by the current gacha UI. This is a prototype economy: the current multiplayer turn state is still submitted by clients and should be moved to server-validated actions before using competitive rankings or valuable persistent currency.

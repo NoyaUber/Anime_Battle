@@ -95,3 +95,10 @@ No SQL is needed for the local demo roster, because the app currently reads `lib
 - Battle Lab now has four moves per fighter, turn-based HP, an automatic CPU response, cooldown display, battle log, and a Victory/Defeat popup.
 - `lib/skills.ts` defines the move kit. The signature skill uses the roster's existing ability label; rapid attack, defensive stance, and ultimate are gameplay adaptations. They are **not** a verified extraction of four canonical VS Battles Wiki abilities for every character. The linked character profile is the reference to verify before competitive use.
 - No new SQL migration is required for this update. Do not rerun the existing initial migration on a database where it has already been applied.
+
+## Win rewards and online multiplayer
+
+- Winning a single-player Battle Lab match grants 200 demo coins to the `aba-demo-save` browser wallet.
+- The `/multiplayer` page supports authenticated private room creation, six-character join codes, realtime room updates, turn-based four-skill combat, battle logs, and a 150-coin winner reward through Supabase RPC.
+- Existing Supabase projects must run `supabase/migrations/002_multiplayer_and_rewards.sql` once in SQL Editor after migration 001. Do not delete existing tables.
+- Multiplayer requires both players to sign into the same Supabase-backed deployment. The turn state is currently client-submitted and is suitable as a prototype, not as an anti-cheat production economy.

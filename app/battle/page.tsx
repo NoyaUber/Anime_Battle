@@ -19,6 +19,7 @@ export default function Battle() {
   const [turn, setTurn] = useState(1);
   const [winner, setWinner] = useState<Fighter | null>(null);
   const [outcome, setOutcome] = useState<Outcome>(null);
+  const [rewardEarned, setRewardEarned] = useState(0);
   const [guardA, setGuardA] = useState(false);
   const [guardB, setGuardB] = useState(false);
   const [cooldownsA, setCooldownsA] = useState<Record<string, number>>({});
@@ -31,7 +32,7 @@ export default function Battle() {
 
   function reset(nextA = a, nextB = b) {
     setA(nextA); setB(nextB); setHpA(MAX_HP); setHpB(MAX_HP); setLogs([]); setTurn(1);
-    setWinner(null); setOutcome(null); setGuardA(false); setGuardB(false); setCooldownsA({}); setCooldownsB({});
+    setWinner(null); setOutcome(null); setRewardEarned(0); setGuardA(false); setGuardB(false); setCooldownsA({}); setCooldownsB({});
   }
   useEffect(() => { reset(a, b); // reset the match when either selected fighter changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -39,6 +40,15 @@ export default function Battle() {
 
   function finish(winningFighter: Fighter, result: Exclude<Outcome, null>, finalLogs: LogEntry[]) {
     setWinner(winningFighter); setOutcome(result); setLogs(finalLogs);
+    if (result === 'win') {
+      const reward = 200;
+      try {
+        const saved = JSON.parse(localStorage.getItem('aba-demo-save') || '{}');
+        const credits = typeof saved.credits === 'number' ? saved.credits : 1200;
+        localStorage.setItem('aba-demo-save', JSON.stringify({ ...saved, credits: credits + reward }));
+        setRewardEarned(reward);
+      } catch { setRewardEarned(0); }
+    }
   }
 
   function play(skill: BattleSkill) {
@@ -114,6 +124,6 @@ export default function Battle() {
     </section>
     <section className="log-panel"><div className="log-header"><div><div className="eyebrow">MATCH TELEMETRY</div><h2>Battle <span>Log</span></h2></div><span className={`log-status ${finished ? 'complete' : ''}`}><i/>{finished ? 'MATCH COMPLETE' : 'READY FOR ACTION'}</span></div><div className="log-lines">{logs.length ? logs.slice().reverse().map((line,i) => <div className={`log-line log-${line.side}`} key={`${turn}-${i}`}><span>{String(logs.length - i).padStart(2,'0')}</span><p>{line.text}</p></div>) : <div className="log-empty"><Swords size={23}/><p>Choose a skill above to start the first turn.</p></div>}</div></section>
     <p className="disclaimer">Character source links point to VS Battles Wiki profiles. Skill names and descriptions must be checked against the exact profile/version; generic guard and game mechanics are adaptations, not source quotations.</p>
-    {outcome && winner && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="battle-result-title"><div className={`result-modal battle-result-modal ${outcome === 'win' ? 'result-win' : 'result-loss'}`}><button className="modal-close" aria-label="Close result" onClick={() => setOutcome(null)}><X size={19}/></button><div className="result-spark">{outcome === 'win' ? <Trophy size={34}/> : <Swords size={34}/>}</div><div className="eyebrow result-eyebrow">MATCH COMPLETE · TURN {turn}</div><h2 id="battle-result-title">{outcome === 'win' ? 'VICTORY' : 'DEFEAT'}</h2><p>{outcome === 'win' ? `${first.name} wins the duel!` : `${first.name} was defeated by ${second.name}.`}</p><FighterPortrait fighter={winner} className="result-avatar"/><h3>{winner.name}</h3><p className="result-subtitle">{winner.universe}</p><div className="result-modal-actions"><button className="button button-primary" onClick={() => { reset(); setOutcome(null); }}>Rematch</button><button className="button button-ghost" onClick={() => setOutcome(null)}>View battle log</button></div></div></div>}
+    {outcome && winner && <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="battle-result-title"><div className={`result-modal battle-result-modal ${outcome === 'win' ? 'result-win' : 'result-loss'}`}><button className="modal-close" aria-label="Close result" onClick={() => setOutcome(null)}><X size={19}/></button><div className="result-spark">{outcome === 'win' ? <Trophy size={34}/> : <Swords size={34}/>}</div><div className="eyebrow result-eyebrow">MATCH COMPLETE · TURN {turn}</div><h2 id="battle-result-title">{outcome === 'win' ? 'VICTORY' : 'DEFEAT'}</h2><p>{outcome === 'win' ? `${first.name} wins the duel!` : `${first.name} was defeated by ${second.name}.`}</p>{outcome === 'win' && <div className="battle-coin-reward"><span>+{rewardEarned || 200}</span> COINS EARNED</div>}<FighterPortrait fighter={winner} className="result-avatar"/><h3>{winner.name}</h3><p className="result-subtitle">{winner.universe}</p><div className="result-modal-actions"><button className="button button-primary" onClick={() => { reset(); setOutcome(null); }}>Rematch</button><button className="button button-ghost" onClick={() => setOutcome(null)}>View battle log</button></div></div></div>}
   </>;
 }
