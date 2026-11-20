@@ -28,7 +28,7 @@ Battle Lab is now a turn-based prototype: choose one of four moves, then the CPU
 Each fighter's first skill uses the roster's existing `ability` label and profile link. The other moves (rapid attack, defensive stance, and ultimate adaptation) are game-design placeholders, not a verified extraction of four canon abilities from every VS Battles Wiki page. Verify each character's exact version and ability list before claiming that a move is source-verified.
 
 ## Security notes
-Never add a Supabase `service_role` key to frontend code or a `NEXT_PUBLIC_` variable. Account authentication is implemented, but cross-device inventory, gacha wallet, and battle-history persistence still need secure server-side/RPC integration.
+Never add a Supabase `service_role` key to frontend code or a `NEXT_PUBLIC_` variable. Account authentication is implemented. Owned character IDs can be persisted through migration 004, but gacha results, wallet, rank, and battle history still need trusted server-side validation for competitive use.
 
 ## Update: win rewards and multiplayer rooms
 
@@ -39,8 +39,10 @@ After the SQL completes, verify that `multiplayer_rooms` is included in Supabase
 Single-player Battle Lab wins award **200 demo coins** in browser storage. Multiplayer wins award **150 coins** through the Supabase wallet RPC and also update the local demo wallet shown by the current gacha UI. This is a prototype economy: the current multiplayer turn state is still submitted by clients and should be moved to server-validated actions before using competitive rankings or valuable persistent currency.
 
 
-### New profile/rank/gacha UI
-No new SQL migration is needed for the current local-demo Profile & Rank, daily claim, starter roster, or 10-pull gacha. These values are stored in the current browser's `aba-demo-save`; they do not sync across devices. Keep the existing SQL migrations for multiplayer as documented above.
+### Persisted character collection
+Run **only** `supabase/migrations/004_persistent_character_collections.sql` after migrations 001–003. Signed-in players then save their owned fighter IDs in a private, account-scoped Supabase table; the collection is loaded again on later logins and cached per account on the device. The first account initialized on a device can import its previous `aba-demo-save` roster once. Demo mode without an account continues to use local storage.
+
+Credits, pity, rank, and daily claims still use the browser demo save. Gacha rolls are still calculated client-side, so collection syncing is persistence—not anti-cheat. If migration 004 is missing or Supabase is unavailable, the UI keeps a local account cache and reports that the cloud copy did not sync.
 
 
 ## Update: profil publik, teman, dan chat global

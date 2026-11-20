@@ -3,7 +3,8 @@
 import FighterPortrait from '@/components/fighter-portrait';
 import { characters, type Fighter } from '@/lib/characters';
 import { getSkills, type BattleSkill } from '@/lib/skills';
-import { awardRank, ensureStarterSave, STARTER_IDS, DEFAULT_CREDITS } from '@/lib/progression';
+import { awardRank, STARTER_IDS, DEFAULT_CREDITS } from '@/lib/progression';
+import { usePlayerCollection } from '@/lib/use-player-collection';
 import { useEffect, useMemo, useState } from 'react';
 import { Swords, RotateCcw, ShieldCheck, Zap, Trophy, X, Heart, Shield, Sparkles } from 'lucide-react';
 
@@ -31,8 +32,9 @@ export default function Battle() {
   const skillsB = useMemo(() => getSkills(second), [second]);
   const finished = Boolean(winner);
   const [usableIds, setUsableIds] = useState<string[]>(STARTER_IDS);
+  const { ownedCharacterIds: ownedIds } = usePlayerCollection();
   const [rankDelta, setRankDelta] = useState(0);
-  useEffect(() => { const save = ensureStarterSave(); setUsableIds(Array.isArray(save.owned) ? [...new Set([...STARTER_IDS, ...save.owned])] : STARTER_IDS); }, []);
+  useEffect(() => { setUsableIds([...new Set([...STARTER_IDS, ...ownedIds])]); }, [ownedIds]);
 
   function reset(nextA = a, nextB = b) {
     setA(nextA); setB(nextB); setHpA(MAX_HP); setHpB(MAX_HP); setLogs([]); setTurn(1);
