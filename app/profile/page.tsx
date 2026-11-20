@@ -6,6 +6,7 @@ import { claimDaily, ensureStarterSave, getRank, DEFAULT_CREDITS, localDateKey }
 import { characters } from '@/lib/characters';
 import { supabase } from '@/lib/supabase';
 import { useUser } from '@/lib/use-user';
+import { usePlayerCollection } from '@/lib/use-player-collection';
 import FighterPortrait from '@/components/fighter-portrait';
 import { PROFILE_COLS, type PlayerProfile, errMsg, fighterFor } from '@/lib/social';
 
@@ -14,7 +15,7 @@ export default function ProfilePage() {
   const [loaded, setLoaded] = useState(false);
   const [points, setPoints] = useState(0);
   const [credits, setCredits] = useState(DEFAULT_CREDITS);
-  const [owned, setOwned] = useState<string[]>([]);
+  const { ownedCharacterIds: owned } = usePlayerCollection();
   const [claimed, setClaimed] = useState(false);
   const [message, setMessage] = useState('');
   // identitas online
@@ -30,7 +31,6 @@ export default function ProfilePage() {
     const s = ensureStarterSave();
     setPoints(Number(s.rankPoints) || 0);
     setCredits(typeof s.credits === 'number' ? s.credits : DEFAULT_CREDITS);
-    setOwned(Array.from(new Set(s.owned ?? [])));
     setClaimed(s.dailyClaimDate === localDateKey());
     setLoaded(true);
   }, []);
@@ -83,7 +83,7 @@ export default function ProfilePage() {
     <div className="pf-stats">
       <article className="profile-stat"><div className="profile-stat-icon"><TrendingUp size={19}/></div><span>WIN / LOSS</span><b>+10 / −5 RP</b><small>Per pertandingan</small></article>
       <article className="profile-stat"><div className="profile-stat-icon coins"><Coins size={19}/></div><span>COINS</span><b>{credits.toLocaleString()}</b><small>Untuk gacha</small></article>
-      <article className="profile-stat"><div className="profile-stat-icon"><Library size={19}/></div><span>FIGHTERS</span><b>{ownedFighters.length}<small className="pf-of"> / {characters.length}</small></b><small>Koleksi di perangkat ini</small></article>
+      <article className="profile-stat"><div className="profile-stat-icon"><Library size={19}/></div><span>FIGHTERS</span><b>{ownedFighters.length}<small className="pf-of"> / {characters.length}</small></b><small>{user ? 'Disimpan ke akun' : 'Tersimpan di browser'}</small></article>
       <article className="profile-stat"><div className="profile-stat-icon"><Users size={19}/></div><span>FRIENDS</span><b>{friendCount ?? '—'}</b><small>{user ? <Link href="/friends">Kelola teman →</Link> : 'Masuk untuk punya teman'}</small></article>
     </div>
 
@@ -111,7 +111,7 @@ export default function ProfilePage() {
     <section className="daily-panel"><div className="daily-icon"><CalendarCheck size={25}/></div><div className="daily-copy"><div className="eyebrow">DAILY SUPPLY DROP</div><h2>Daily <span>Claim</span></h2><p>Klaim 500 koin sekali setiap hari untuk membantu mengembangkan koleksimu.</p>{message && <small className="daily-message">{message}</small>}</div>
       <button className="button button-primary daily-button" disabled={!loaded || claimed} onClick={daily}><Coins size={17}/>{claimed ? 'Claimed Today' : '+500 Claim'}</button></section>
 
-    <div className="profile-note">Koin, koleksi, dan daily claim tersimpan di browser/perangkat ini. Rank point disinkronkan ke profil publik saat kamu online, tetapi masih dihitung di perangkat (belum divalidasi server).</div>
+    <div className="profile-note">Koin, pity, dan daily claim masih tersimpan di browser. Koleksi fighter disinkronkan ke akun Supabase saat login setelah migration 004 dijalankan. Rank point tetap dihitung di perangkat dan belum divalidasi server.</div>
     <div className="hero-actions"><Link className="button button-primary" href="/battle"><Swords size={16}/> Play Battle</Link><Link className="button button-ghost" href="/gacha"><Coins size={16}/> Open Gacha</Link></div>
   </>;
 }
