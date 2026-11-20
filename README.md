@@ -110,7 +110,7 @@ No SQL is needed for the local demo roster, because the app currently reads `lib
 - Profile & Rank: wins add 10 RP, losses subtract 5 RP (minimum 0); first rank Bronze begins at 100 RP.
 - Daily claim: +500 coins once per local calendar day.
 - Missing source portraits show a generated stylized fallback illustration. Arena Tier is a cross-universe game estimate based on Power/Speed/Durability, not in-universe placement.
-- Credits, pity, rank, and daily claims remain browser-local. Signed-in character collections sync to Supabase after running `supabase/migrations/004_persistent_character_collections.sql` (after migrations 001–003); gacha results are still client-calculated and not anti-cheat protected.
+- Credits, rank, and daily claims remain browser-local. Signed-in character collections sync after migration 004 and pity counters after migration 005 (after 001–004). Gacha rolls still run in the browser, so syncing the counter does not make pity or rewards anti-cheat protected.
 
 ## Gambar karakter (VS Battles)
 - Gambar diambil otomatis dari profil VSB lewat `/api/character-images` (urutan: pageimages+redirect → Articles/Details → og:image).

@@ -111,7 +111,7 @@ export default function ProfilePage() {
     <section className="daily-panel"><div className="daily-icon"><CalendarCheck size={25}/></div><div className="daily-copy"><div className="eyebrow">DAILY SUPPLY DROP</div><h2>Daily <span>Claim</span></h2><p>Klaim 500 koin sekali setiap hari untuk membantu mengembangkan koleksimu.</p>{message && <small className="daily-message">{message}</small>}</div>
       <button className="button button-primary daily-button" disabled={!loaded || claimed} onClick={daily}><Coins size={17}/>{claimed ? 'Claimed Today' : '+500 Claim'}</button></section>
 
-    <div className="profile-note">Koin, pity, dan daily claim masih tersimpan di browser. Koleksi fighter disinkronkan ke akun Supabase saat login setelah migration 004 dijalankan. Rank point tetap dihitung di perangkat dan belum divalidasi server.</div>
+    <div className="profile-note">Koin dan daily claim masih tersimpan di browser. Koleksi fighter disinkronkan ke akun Supabase setelah migration 004, pity setelah migration 005. Rank point tetap dihitung di perangkat dan belum divalidasi server.</div>
     <div className="hero-actions"><Link className="button button-primary" href="/battle"><Swords size={16}/> Play Battle</Link><Link className="button button-ghost" href="/gacha"><Coins size={16}/> Open Gacha</Link></div>
   </>;
 }

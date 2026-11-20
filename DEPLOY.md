@@ -39,10 +39,10 @@ After the SQL completes, verify that `multiplayer_rooms` is included in Supabase
 Single-player Battle Lab wins award **200 demo coins** in browser storage. Multiplayer wins award **150 coins** through the Supabase wallet RPC and also update the local demo wallet shown by the current gacha UI. This is a prototype economy: the current multiplayer turn state is still submitted by clients and should be moved to server-validated actions before using competitive rankings or valuable persistent currency.
 
 
-### Persisted character collection
+### Persisted character collection and pity
 Run **only** `supabase/migrations/004_persistent_character_collections.sql` after migrations 001–003. Signed-in players then save their owned fighter IDs in a private, account-scoped Supabase table; the collection is loaded again on later logins and cached per account on the device. The first account initialized on a device can import its previous `aba-demo-save` roster once. Demo mode without an account continues to use local storage.
 
-Credits, pity, rank, and daily claims still use the browser demo save. Gacha rolls are still calculated client-side, so collection syncing is persistence—not anti-cheat. If migration 004 is missing or Supabase is unavailable, the UI keeps a local account cache and reports that the cloud copy did not sync.
+Credits, rank, and daily claims still use the browser demo save. Signed-in pity counters can sync through `supabase/migrations/005_persistent_gacha_pity.sql` after migrations 001–004. Gacha rolls and the counter value are still client-controlled, so this is persistence—not anti-cheat. If migration 005 is missing or Supabase is unavailable, the UI uses a per-account device cache and reports that the cloud copy did not sync.
 
 
 ## Update: profil publik, teman, dan chat global
